@@ -8,7 +8,7 @@
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>body{margin:0;background:#101824;color:white;font-family:sans-serif}#unity-container{width:100%;position:relative;left:auto;top:auto;transform:none}#unity-footer{height:60px}#unity-webgl-logo{display:none}button{padding:10px 20px;margin:6px;border-radius:6px}#xr-status{font-size:13px;padding:8px}#enterar{display:none!important}#entervr:enabled,#entervr:disabled{width:auto;min-width:110px;height:42px}#unity-webxr-link{font-size:12px}canvas{touch-action:none}#unity-footer{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 10px;box-sizing:border-box;height:110px}#xr-status{flex:1;min-width:160px}#unity-build-title{display:none}#unity-webxr-link{order:3;width:100%;line-height:18px}#entervr{flex-shrink:0;float:none!important}body{overflow:hidden}</style>
+<style>body{margin:0;background:#101824;color:white;font-family:sans-serif}#unity-container{width:100%;position:relative;left:auto;top:auto;transform:none}#unity-footer{height:60px}#unity-webgl-logo{display:none}button{padding:10px 20px;margin:6px;border-radius:6px}#xr-status{font-size:13px;padding:8px}#enterar{display:none!important}#entervr:enabled,#entervr:disabled{width:auto;min-width:110px;height:42px}#unity-webxr-link{font-size:12px}canvas{touch-action:none}#unity-footer{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 10px;box-sizing:border-box;height:110px}#xr-status{flex:1;min-width:160px}#unity-build-title{display:none}#unity-webxr-link{order:3;width:100%;line-height:18px}#entervr{flex-shrink:0;float:none!important}body{overflow:hidden}#entervr[hidden]{display:none!important}</style>
 </head>
   <body>
     <div id="unity-container">
@@ -23,10 +23,10 @@
       </div>
       <div id="unity-footer">
         <div id="unity-webgl-logo"></div>
-        <button id="entervr" value="Enter VR" disabled>Enter VR</button>
+        <button id="entervr" value="Enter VR" disabled hidden>Enter VR</button>
         <button id="enterar" value="Enter AR" disabled hidden>AR</button>
         <div id="unity-webxr-link">Using <a href="https://github.com/De-Panther/unity-webxr-export" target="_blank" title="WebXR Export">WebXR Export</a></div>
-        <span id="xr-status">Checking VR support...</span><div id="unity-build-title">WebXRDemoProject</div>
+        <span id="xr-status">Drag to look; tap Next photo to change rooms.</span><div id="unity-build-title">WebXRDemoProject</div>
       </div>
     </div>
     <script>
@@ -62,6 +62,7 @@
           progressBarFull.style.width = 100 * progress + "%";
         }).then((instance) => {
           unityInstance = instance;
+          updateVRButton();
           loadingBar.style.display = "none";
           if (fullscreenButton)
           {
@@ -75,24 +76,33 @@
       };
       document.body.appendChild(script);
 
-      if (!window.isSecureContext) document.getElementById('xr-status').textContent = 'VR requires HTTPS or localhost.';
-      else if (!navigator.xr) document.getElementById('xr-status').textContent = 'This browser has no WebXR. Desktop viewing is available.';
-      let enterARButton = document.getElementById('enterar');
-      let enterVRButton = document.getElementById('entervr');
+      // Phone and desktop stay in single-view mode. Only Quest gets a VR entry point.
+      const isQuestBrowser = /OculusBrowser|Quest Browser/i.test(navigator.userAgent);
+      const enterVRButton = document.getElementById('entervr');
+      const xrStatus = document.getElementById('xr-status');
+      let supportsImmersiveVR = false;
 
-      document.addEventListener('onARSupportedCheck', function (event) {
-        enterARButton.disabled = !event.detail.supported;
-      }, false);
+      function updateVRButton() {
+        const available = isQuestBrowser && window.isSecureContext && supportsImmersiveVR;
+        enterVRButton.hidden = !available;
+        enterVRButton.disabled = !available || !unityInstance;
+        xrStatus.textContent = available
+          ? 'Quest: Enter VR, then A / trigger to change photo.'
+          : 'Drag to look; tap Next photo to change rooms.';
+        if (isQuestBrowser && !window.isSecureContext)
+          xrStatus.textContent = 'Quest VR requires HTTPS. Drag to look in the meantime.';
+      }
+
       document.addEventListener('onVRSupportedCheck', function (event) {
-        enterVRButton.disabled = !event.detail.supported; document.getElementById('xr-status').textContent = event.detail.supported ? 'Quest: Enter VR, then A / trigger to change photo' : 'VR unavailable here. Drag to look; use Next photo.';
+        supportsImmersiveVR = !!event.detail.supported;
+        updateVRButton();
       }, false);
+      enterVRButton.addEventListener('click', function () {
+        if (!enterVRButton.hidden && !enterVRButton.disabled && unityInstance)
+          unityInstance.Module.WebXR.toggleVR();
+      }, false);
+      updateVRButton();
 
-      enterARButton.addEventListener('click', function (event) {
-        unityInstance.Module.WebXR.toggleAR();
-      }, false);
-      enterVRButton.addEventListener('click', function (event) {
-        unityInstance.Module.WebXR.toggleVR();
-      }, false);
     </script>
   </body>
 </html>
