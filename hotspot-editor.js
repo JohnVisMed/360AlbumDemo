@@ -8,7 +8,7 @@
   toggle.style.cssText='position:sticky;top:0;z-index:1;background:#f0f3f6;color:#152436';
   toggle.disabled=true;
   const panel=document.createElement('div'); panel.hidden=true;
-  const help=document.createElement('p'); help.textContent='拖曳全景，把中央 + 對準 hotspot 位置，再選目標房間並新增。觀看時點標記；Quest 望向藍色球再按扳機。';
+  const help=document.createElement('p'); help.textContent='拖曳全景，把中央 + 對準 hotspot 位置，再選目標房間並新增。觀看時點標記；Quest 用射線指向藍色球，再按扳機或捏合。';
   const room=document.createElement('select'); room.setAttribute('aria-label','正在編輯的相片');
   const target=document.createElement('select'); target.setAttribute('aria-label','Hotspot 目標房間');
   const add=document.createElement('button'); add.textContent='在中央新增 hotspot';
